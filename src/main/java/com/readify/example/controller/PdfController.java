@@ -18,7 +18,7 @@ public class PdfController {
 
     @PostMapping("save-pdf")
     public ResponseEntity<ResponseDTO> savePdf(@RequestParam("name") String name,
-                                               @RequestParam("description") String description,
+                                               @RequestParam(value = "description", required = false) String description,
                                                @RequestParam("file") MultipartFile file) throws IOException {
         ResponseDTO responseDTO = service.savePdf(name, description, file);
         return ResponseEntity.ok(responseDTO);
