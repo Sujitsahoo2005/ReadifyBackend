@@ -13,4 +13,6 @@ public interface PdfRepo extends JpaRepository<Pdf, Long> {
     Page<Pdf> findAllByIsActiveTrue(Pageable pageable);
 
     Optional<Pdf> findByIdAndIsActiveTrue(Long id);
+
+    Page<Pdf> findByIsActiveTrueAndNameContainingIgnoreCase(String search, Pageable pageable);
 }

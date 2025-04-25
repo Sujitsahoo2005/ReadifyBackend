@@ -28,8 +28,9 @@ public class PdfController {
 
     @GetMapping("get-list-pdf")
     public ResponseEntity<ResponseDTO> getListPdf(@RequestParam(value = "page", defaultValue = "0") Integer page,
-                                                  @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) throws IOException {
-        ResponseDTO responseDTO = service.getListPdf(page, pageSize);
+                                                  @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
+                                                  @RequestParam(value = "search", required = false) String search) throws IOException {
+        ResponseDTO responseDTO = service.getListPdf(page, pageSize, search);
         return ResponseEntity.ok(responseDTO);
     }
 
