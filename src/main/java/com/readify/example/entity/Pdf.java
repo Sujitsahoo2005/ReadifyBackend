@@ -16,10 +16,11 @@ public class Pdf {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-
     String name;
     @Lob
     String description;
+    String author;
     String pdf;
+    String image;
     Boolean isActive = true;
 }

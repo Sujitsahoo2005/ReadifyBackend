@@ -15,10 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -30,7 +30,7 @@ public class PdfServiceImpl implements PdfService {
     private PdfRepo pdfRepo;
 
     @Override
-    public ResponseDTO savePdf(String name, String description, MultipartFile file) throws IOException {
+    public ResponseDTO savePdf(String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException {
         ResponseDTO responseDTO = new ResponseDTO();
 
         // Validate file is PDF and not empty
@@ -40,21 +40,13 @@ public class PdfServiceImpl implements PdfService {
             return responseDTO;
         }
 
-        if (!isPdfFile(file)) {
-            responseDTO.setStatus("Failed");
-            responseDTO.setMessage("Only PDF files are allowed");
-            return responseDTO;
-        }
+//        if (!isPdfFile(file)) {
+//            responseDTO.setStatus("Failed");
+//            responseDTO.setMessage("Only PDF files are allowed");
+//            return responseDTO;
+//        }
 
-        // Validate name and description
-        if (name == null || name.trim().isEmpty()) {
-            responseDTO.setStatus("Failed");
-            responseDTO.setMessage("Name is required");
-            return responseDTO;
-        }
-
-        // Save PDF and file
-        Pdf pdf = savePdfFile(name, description, file);
+        Pdf pdf = savePdfFile(name, description, file, image, author);
 
         responseDTO.setStatus("Success");
         responseDTO.setMessage("PDF saved successfully");
@@ -73,14 +65,14 @@ public class PdfServiceImpl implements PdfService {
             PdfDTO pdfDTO = new PdfDTO();
             pdfDTO.setId(pdf.getId());
             pdfDTO.setName(pdf.getName());
-            pdfDTO.setDescription(pdf.getDescription());
+            pdfDTO.setAuthor(pdf.getAuthor());
             String path = commonApplicationProperties.getBaseUrl() + pdf.getId();
-            pdfDTO.setPdf(path +"/"+ pdf.getPdf());
+            pdfDTO.setImage(path + "/" + pdf.getImage());
             pdfDTOList.add(pdfDTO);
         });
 
         responseDTO.setStatus("Success");
-        responseDTO.setMessage("Pdf list fetched successfully");
+        responseDTO.setMessage("PDF list fetched successfully");
         responseDTO.setList(pdfDTOList);
         responseDTO.setPage(pdfList.getNumber());
         responseDTO.setPageSize(pdfList.getSize());
@@ -90,29 +82,30 @@ public class PdfServiceImpl implements PdfService {
     }
 
     @Override
-    public ResponseDTO editPdf(Long id, String name, String description, MultipartFile file) throws IOException {
+    public ResponseDTO editPdf(Long id, String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException {
         ResponseDTO responseDTO = new ResponseDTO();
         Pdf pdf = pdfRepo.findById(id).orElseThrow(() -> new RuntimeException("Id not found"));
-        if(!pdf.getIsActive())
+        if (!pdf.getIsActive())
             throw new RuntimeException("PDF already deleted");
 
         // Validate name and description
-        if (name != null && !name.trim().isEmpty()) {
+        if (name != null && !name.trim().isEmpty())
             pdf.setName(name);
-        }
 
-        if (description != null && !description.trim().isEmpty()) {
+        if (description != null && !description.trim().isEmpty())
             pdf.setDescription(description);
-        }
+
+        if (author != null && !author.trim().isEmpty())
+            pdf.setAuthor(author);
 
         // If file is provided, process it
         if (file != null && !file.isEmpty()) {
             // Validate file is PDF
-            if (!isPdfFile(file)) {
-                responseDTO.setStatus("Failed");
-                responseDTO.setMessage("Only PDF files are allowed");
-                return responseDTO;
-            }
+//            if (!isPdfFile(file)) {
+//                responseDTO.setStatus("Failed");
+//                responseDTO.setMessage("Only PDF files are allowed");
+//                return responseDTO;
+//            }
 
             String renamedFile = handleFileSave(file);
             pdf.setPdf(renamedFile);
@@ -124,6 +117,13 @@ public class PdfServiceImpl implements PdfService {
             // Save the file using the ImageUpload utility
             ImageUpload.saveFile(file, path, renamedFile);
         }
+        if (image != null && !image.isEmpty()) {
+            String renamedImage = handleFileSave(image);
+            pdf.setImage(renamedImage);
+            String imagePath = commonApplicationProperties.getAssetPath() + pdf.getId();
+            ImageUpload.saveFile(image, imagePath, renamedImage);
+        }
+
         pdfRepo.save(pdf);
         responseDTO.setStatus("Success");
         responseDTO.setMessage("PDF updated successfully");
@@ -137,16 +137,39 @@ public class PdfServiceImpl implements PdfService {
         pdf.setIsActive(false);
         pdfRepo.save(pdf);
         responseDTO.setStatus("Success");
-        responseDTO.setMessage("Pdf deleted successfully");
+        responseDTO.setMessage("PDF deleted successfully");
         return responseDTO;
     }
 
-    private Pdf savePdfFile(String name, String description, MultipartFile file) throws IOException {
+    @Override
+    public ResponseDTO getDetailsPdf(Long id) {
+        ResponseDTO responseDTO = new ResponseDTO();
+        Optional<Pdf> pdf = pdfRepo.findByIdAndIsActiveTrue(id);
+        PdfDTO pdfDTO = new PdfDTO();
+        if (pdf.isPresent()) {
+            Pdf pdf1 = pdf.get();
+            pdfDTO.setName(pdf1.getName());
+            pdfDTO.setDescription(pdf1.getDescription());
+            pdfDTO.setAuthor(pdf1.getAuthor());
+            String path = commonApplicationProperties.getBaseUrl() + pdf1.getId();
+            pdfDTO.setImage(path + "/" + pdf1.getImage());
+            pdfDTO.setPdf(path + "/" + pdf1.getPdf());
+            responseDTO.setData(Optional.of(pdfDTO));
+        }
+
+        responseDTO.setStatus("Success");
+        responseDTO.setMessage("PDF details fetched");
+        return responseDTO;
+    }
+
+    private Pdf savePdfFile(String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException {
         Pdf pdf = new Pdf();
         pdf.setName(name);
         pdf.setDescription(description);
-
+        pdf.setAuthor(author);
+        String renamedImage = handleFileSave(image);
         String renamedFile = handleFileSave(file);
+        pdf.setImage(renamedImage);
         pdf.setPdf(renamedFile);
 
         // Save PDF data to DB
@@ -156,7 +179,7 @@ public class PdfServiceImpl implements PdfService {
         String path = commonApplicationProperties.getAssetPath() + pdf.getId();
         log.info("Saving PDF to: " + path);
         ImageUpload.saveFile(file, path, renamedFile);
-
+        ImageUpload.saveFile(image, path, renamedImage);
         return pdf;
     }
 
