@@ -19,8 +19,10 @@ public class PdfController {
     @PostMapping("save-pdf")
     public ResponseEntity<ResponseDTO> savePdf(@RequestParam("name") String name,
                                                @RequestParam(value = "description", required = false) String description,
-                                               @RequestParam("file") MultipartFile file) throws IOException {
-        ResponseDTO responseDTO = service.savePdf(name, description, file);
+                                               @RequestParam("file") MultipartFile file,
+                                               @RequestParam("image") MultipartFile image,
+                                               @RequestParam("author") String author) throws IOException {
+        ResponseDTO responseDTO = service.savePdf(name, description, file, image, author);
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -35,14 +37,22 @@ public class PdfController {
     public ResponseEntity<ResponseDTO> editPdf(@RequestParam(value = "id") Long id,
                                                @RequestParam(value = "name", required = false) String name,
                                                @RequestParam(value = "description", required = false) String description,
-                                               @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
-        ResponseDTO responseDTO = service.editPdf(id, name, description, file);
+                                               @RequestParam(value = "file", required = false) MultipartFile file,
+                                               @RequestParam(value = "image", required = false) MultipartFile image,
+                                               @RequestParam(value = "author", required = false) String author) throws IOException {
+        ResponseDTO responseDTO = service.editPdf(id, name, description, file, image, author);
         return ResponseEntity.ok(responseDTO);
     }
 
     @DeleteMapping("delete-pdf")
     public ResponseEntity<ResponseDTO> editPdf(@RequestParam(value = "id") Long id) throws IOException {
         ResponseDTO responseDTO = service.deletePdf(id);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("get-details-pdf")
+    public ResponseEntity<ResponseDTO> getDetailsPdf(@RequestParam(value = "id") Long id) throws IOException {
+        ResponseDTO responseDTO = service.getDetailsPdf(id);
         return ResponseEntity.ok(responseDTO);
     }
 }
