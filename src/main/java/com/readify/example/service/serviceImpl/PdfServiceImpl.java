@@ -55,12 +55,18 @@ public class PdfServiceImpl implements PdfService {
 
 
     @Override
-    public ResponseDTO getListPdf(Integer page, Integer pageSize) {
+    public ResponseDTO getListPdf(Integer page, Integer pageSize, String search) {
         ResponseDTO responseDTO = null;
         responseDTO = new ResponseDTO();
         Pageable pageable = PageRequest.of(page, pageSize);
         List<PdfDTO> pdfDTOList = new ArrayList<>();
-        Page<Pdf> pdfList = pdfRepo.findAllByIsActiveTrue(pageable);
+        Page<Pdf> pdfList;
+        if(search == null) {
+            pdfList = pdfRepo.findAllByIsActiveTrue(pageable);
+        } else{
+            pdfList = pdfRepo.findByIsActiveTrueAndNameContainingIgnoreCase(search, pageable);
+        }
+
         pdfList.forEach(pdf -> {
             PdfDTO pdfDTO = new PdfDTO();
             pdfDTO.setId(pdf.getId());
