@@ -70,6 +70,7 @@ public class PdfServiceImpl implements PdfService {
             pdfDTO.setId(pdf.getId());
             pdfDTO.setName(pdf.getName());
             pdfDTO.setAuthor(pdf.getAuthor());
+            pdfDTO.setDescription(pdf.getDescription());
             String path = commonApplicationProperties.getBaseUrl() + pdf.getId();
             pdfDTO.setImage(path + "/" + pdf.getImage());
             pdfDTOList.add(pdfDTO);
