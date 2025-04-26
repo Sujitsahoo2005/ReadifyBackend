@@ -4,6 +4,8 @@ import com.readify.example.config.CommonApplicationProperties;
 import com.readify.example.dto.PdfDTO;
 import com.readify.example.dto.ResponseDTO;
 import com.readify.example.entity.Pdf;
+import com.readify.example.enumaration.ErrorCode;
+import com.readify.example.exception.BackendException;
 import com.readify.example.repo.PdfRepo;
 import com.readify.example.service.PdfService;
 import com.readify.example.utils.ImageUpload;
@@ -30,20 +32,16 @@ public class PdfServiceImpl implements PdfService {
     private PdfRepo pdfRepo;
 
     @Override
-    public ResponseDTO savePdf(String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException {
+    public ResponseDTO savePdf(String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException, BackendException {
         ResponseDTO responseDTO = new ResponseDTO();
 
         // Validate file is PDF and not empty
         if (file == null || file.isEmpty()) {
-            responseDTO.setStatus("Failed");
-            responseDTO.setMessage("File is required");
-            return responseDTO;
+            throw new BackendException(ErrorCode.REQUEST_ERROR, "File is required");
         }
 
 //        if (!isPdfFile(file)) {
-//            responseDTO.setStatus("Failed");
-//            responseDTO.setMessage("Only PDF files are allowed");
-//            return responseDTO;
+//            throw new BackendException(ErrorCode.REQUEST_ERROR, "Only PDF files are allowed");
 //        }
 
         Pdf pdf = savePdfFile(name, description, file, image, author);
@@ -88,11 +86,11 @@ public class PdfServiceImpl implements PdfService {
     }
 
     @Override
-    public ResponseDTO editPdf(Long id, String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException {
+    public ResponseDTO editPdf(Long id, String name, String description, MultipartFile file, MultipartFile image, String author) throws IOException, BackendException {
         ResponseDTO responseDTO = new ResponseDTO();
-        Pdf pdf = pdfRepo.findById(id).orElseThrow(() -> new RuntimeException("Id not found"));
+        Pdf pdf = pdfRepo.findById(id).orElseThrow(() -> new BackendException(ErrorCode.ENTITY_NOT_FOUND, "Id not found"));
         if (!pdf.getIsActive())
-            throw new RuntimeException("PDF already deleted");
+            throw new BackendException(ErrorCode.REQUEST_ERROR, "PDF already deleted");
 
         // Validate name and description
         if (name != null && !name.trim().isEmpty())
@@ -107,11 +105,9 @@ public class PdfServiceImpl implements PdfService {
         // If file is provided, process it
         if (file != null && !file.isEmpty()) {
             // Validate file is PDF
-//            if (!isPdfFile(file)) {
-//                responseDTO.setStatus("Failed");
-//                responseDTO.setMessage("Only PDF files are allowed");
-//                return responseDTO;
-//            }
+            if (!isPdfFile(file)) {
+                throw new BackendException(ErrorCode.REQUEST_ERROR, "Only PDF files are allowed");
+            }
 
             String renamedFile = handleFileSave(file);
             pdf.setPdf(renamedFile);
@@ -137,9 +133,9 @@ public class PdfServiceImpl implements PdfService {
     }
 
     @Override
-    public ResponseDTO deletePdf(Long id) {
+    public ResponseDTO deletePdf(Long id) throws BackendException {
         ResponseDTO responseDTO = new ResponseDTO();
-        Pdf pdf = pdfRepo.findById(id).orElseThrow(() -> new RuntimeException("Id not found"));
+        Pdf pdf = pdfRepo.findById(id).orElseThrow(() -> new BackendException(ErrorCode.ENTITY_NOT_FOUND, "Id not found"));
         pdf.setIsActive(false);
         pdfRepo.save(pdf);
         responseDTO.setStatus("Success");
