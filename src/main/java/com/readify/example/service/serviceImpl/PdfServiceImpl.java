@@ -40,9 +40,9 @@ public class PdfServiceImpl implements PdfService {
             throw new BackendException(ErrorCode.REQUEST_ERROR, "File is required");
         }
 
-//        if (!isPdfFile(file)) {
-//            throw new BackendException(ErrorCode.REQUEST_ERROR, "Only PDF files are allowed");
-//        }
+        if (!isPdfFile(file)) {
+            throw new BackendException(ErrorCode.REQUEST_ERROR, "Only PDF files are allowed");
+        }
 
         Pdf pdf = savePdfFile(name, description, file, image, author);
 
