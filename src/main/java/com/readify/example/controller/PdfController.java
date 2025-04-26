@@ -1,6 +1,7 @@
 package com.readify.example.controller;
 
 import com.readify.example.dto.ResponseDTO;
+import com.readify.example.exception.BackendException;
 import com.readify.example.service.PdfService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class PdfController {
                                                @RequestParam(value = "description", required = false) String description,
                                                @RequestParam("file") MultipartFile file,
                                                @RequestParam("image") MultipartFile image,
-                                               @RequestParam("author") String author) throws IOException {
+                                               @RequestParam("author") String author) throws IOException, BackendException {
         ResponseDTO responseDTO = service.savePdf(name, description, file, image, author);
         return ResponseEntity.ok(responseDTO);
     }
@@ -40,13 +41,13 @@ public class PdfController {
                                                @RequestParam(value = "description", required = false) String description,
                                                @RequestParam(value = "file", required = false) MultipartFile file,
                                                @RequestParam(value = "image", required = false) MultipartFile image,
-                                               @RequestParam(value = "author", required = false) String author) throws IOException {
+                                               @RequestParam(value = "author", required = false) String author) throws IOException, BackendException {
         ResponseDTO responseDTO = service.editPdf(id, name, description, file, image, author);
         return ResponseEntity.ok(responseDTO);
     }
 
     @DeleteMapping("delete-pdf")
-    public ResponseEntity<ResponseDTO> editPdf(@RequestParam(value = "id") Long id) throws IOException {
+    public ResponseEntity<ResponseDTO> editPdf(@RequestParam(value = "id") Long id) throws IOException, BackendException {
         ResponseDTO responseDTO = service.deletePdf(id);
         return ResponseEntity.ok(responseDTO);
     }
